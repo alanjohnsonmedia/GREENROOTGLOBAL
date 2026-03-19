@@ -1,14 +1,10 @@
-import express from "express";
-import cors from "cors";
 import nodemailer from "nodemailer";
 
-const app = express();
-const PORT = process.env.PORT || 5000;
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
 
-app.use(cors());
-app.use(express.json());
-
-app.post("/api/contact", async (req, res) => {
   const { name, email, phone, country, product, message } = req.body || {};
 
   if (!name || !email || !country || !product || !message) {
@@ -26,7 +22,8 @@ app.post("/api/contact", async (req, res) => {
       },
     });
 
-    const recipient = process.env.CONTACT_RECIPIENT || "export@greenrootglobal.com";
+    const recipient =
+      process.env.CONTACT_RECIPIENT || "export@greenrootglobal.com";
 
     const lines = [
       `Name: ${name}`,
@@ -44,21 +41,10 @@ app.post("/api/contact", async (req, res) => {
       to: recipient,
       subject: `New export enquiry from ${name}`,
       text: lines.join("\n"),
-      html: lines.map((l) => `<p>${l}</p>`).join(""),
     });
 
-    return res.json({ success: true });
+    return res.status(200).json({ success: true });
   } catch (error) {
-    console.error("Error sending contact email", error);
-    return res.status(500).json({ error: "Failed to send message" });
+    return res.status(500).json({ error: "Email failed" });
   }
-});
-
-app.get("/api/health", (_req, res) => {
-  res.json({ status: "ok" });
-});
-
-app.listen(PORT, () => {
-  console.log(`Contact backend listening on port ${PORT}`);
-});
-
+}
